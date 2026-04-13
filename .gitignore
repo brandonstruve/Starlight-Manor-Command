@@ -1,0 +1,21 @@
+# Environment & Credentials
+.env
+config/.env
+config/*- Copy*
+config/credentials/
+credentials.json
+token.json
+
+# Data, DBs, and Caches
+data/
+*.db
+*.csv
+__pycache__/
+
+# Logs
+logs/
+*.log
+
+# Media and External
+Working/
+Images/

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Home - {{ hub_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>{{ hub_name }}</h2>
+    <p>System Version: <span style="color: var(--accent-gold);">v{{ hub_version }}</span></p>
+</div>
+
+<div class="card" style="max-width: 600px; margin-top: var(--spacing-xl);">
+    <div class="card-header">
+        <h3>System Readiness</h3>
+    </div>
+    <div class="card-body">
+        <p>All modules are loaded and accessible via the sidebar navigation.</p>
+        
+        <div style="margin-top: var(--spacing-lg); display: flex; gap: 10px;">
+            <a href="file://SM-NAS-01/Media/" class="btn btn-secondary" style="font-size: 0.8rem;">📂 Open NAS Media</a>
+            <a href="/health" target="_blank" class="btn btn-secondary" style="font-size: 0.8rem;">⚙️ API Health</a>
+        </div>
+    </div>
+</div>
+
+<div style="margin-top: var(--spacing-xl); opacity: 0.3;">
+    <p style="font-size: 0.8rem; font-style: italic;">
+        Standing by for command at {{ now().strftime('%H:%M') }}...
+    </p>
+</div>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Photos - {{ hub_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>📷 Photos</h2>
+    <p>C:\Starlight Manor Command\Working\Photos\</p>
+</div>
+
+<!-- Ingest Section -->
+<div class="card">
+    <div class="card-header">
+        <h3>Ingest</h3>
+    </div>
+    <div class="card-body">
+        <p>Scan source folders and move photos to working folders based on GPS data.</p>
+        
+        <div class="button-group">
+            <button onclick="ingestPreflight()" class="btn btn-secondary">Scan Sources</button>
+            <button onclick="ingestRun()" class="btn btn-primary" id="ingest-run-btn">Run Ingest</button>
+        </div>
+        
+        <div id="ingest-results" class="results-area"></div>
+    </div>
+</div>
+
+<!-- Publish Section -->
+<div class="card">
+    <div class="card-header">
+        <h3>Publish</h3>
+    </div>
+    <div class="card-body">
+        <p>Rename photos and move to final library locations.</p>
+        
+        <div class="button-group">
+            <button onclick="publishPreflight()" class="btn btn-secondary">Preview Publish</button>
+            <button onclick="publishRun()" class="btn btn-primary" id="publish-run-btn">Run Publish</button>
+        </div>
+        
+        <div id="publish-results" class="results-area"></div>
+    </div>
+</div>
+
+<!-- Cleanup Section -->
+<div class="card">
+    <div class="card-header">
+        <h3>Cleanup</h3>
+    </div>
+    <div class="card-body">
+        <p>Permanently delete files from all working folders.</p>
+        
+        <button onclick="cleanup()" class="btn btn-danger">Clean All Working Folders</button>
+        
+        <div id="cleanup-results" class="results-area"></div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="loading-overlay" style="display: none;">
+    <div class="loading-spinner"></div>
+    <p>Processing...</p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/photos.js') }}"></script>
+{% endblock %}

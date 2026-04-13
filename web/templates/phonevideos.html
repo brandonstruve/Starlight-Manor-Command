@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Phone Videos - {{ hub_name }}{% endblock %}
+
+{% block content %}
+<div class="module-header">
+    <h1 class="module-title">Phone Video Ingest</h1>
+    <p class="source-text">Source: <span class="highlight">Working\Photos\Raw Import\</span></p>
+</div>
+
+<div class="action-card">
+    <div class="card-header-main">
+        <h2 class="queue-title">Incoming Queue</h2>
+        <div class="button-group-header">
+            <button id="scan-btn" class="btn btn-primary-yellow" onclick="scanPhoneVideos()">Scan incoming Folder</button>
+            <button id="ingest-btn" class="btn btn-primary-yellow" style="display: none;" onclick="runPhoneIngest()">Run Ingest</button>
+        </div>
+    </div>
+
+    <div class="card-body-well">
+        <div id="empty-state" class="empty-message-center">
+            No files scanned. Click the button above to begin.
+        </div>
+        
+        <div id="results-table-container" style="display: none;">
+            <table class="ingest-table">
+                <thead>
+                    <tr>
+                        <th>SOURCE</th>
+                        <th>FILENAME</th>
+                        <th>DESTINATION</th>
+                    </tr>
+                </thead>
+                <tbody id="preview-body">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="loading-overlay" class="overlay" style="display: none;">
+    <div class="loader"></div>
+    <p>Processing files...</p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let pendingFiles = [];
+
+    async function scanPhoneVideos() {
+        const emptyState = document.getElementById('empty-state');
+        const tableContainer = document.getElementById('results-table-container');
+        const previewBody = document.getElementById('preview-body');
+        const ingestBtn = document.getElementById('ingest-btn');
+        
+        previewBody.innerHTML = '';
+        
+        try {
+            const response = await fetch('/phonevideos/scan');
+            pendingFiles = await response.json();
+            
+            if (pendingFiles.length === 0) {
+                showToast("No new files found.", "info");
+                emptyState.style.display = 'block';
+                tableContainer.style.display = 'none';
+                ingestBtn.style.display = 'none';
+            } else {
+                pendingFiles.forEach(file => {
+                    const row = `<tr>
+                        <td><span class="badge-folder">${file.source_folder}</span></td>
+                        <td>${file.old_name}</td>
+                        <td class="path-preview">${file.new_path}</td>
+                    </tr>`;
+                    previewBody.innerHTML += row;
+                });
+                emptyState.style.display = 'none';
+                tableContainer.style.display = 'block';
+                ingestBtn.style.display = 'inline-block';
+            }
+        } catch (error) {
+            showToast("Error scanning folders.", "error");
+        }
+    }
+
+    async function runPhoneIngest() {
+        if (!confirm(`Move ${pendingFiles.length} files to NAS?`)) return;
+        showLoading();
+        try {
+            const response = await fetch('/phonevideos/ingest', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ files: pendingFiles })
+            });
+            const result = await response.json();
+            hideLoading();
+            if (result.success) {
+                showToast(`Success! Moved ${result.count} videos.`, "success");
+                setTimeout(() => location.reload(), 1500);
+            }
+        } catch (error) {
+            hideLoading();
+            showToast("Ingest failed.", "error");
+        }
+    }
+</script>
+
+<style>
+    /* Header Styles */
+    .source-text { color: #f1c40f; font-size: 0.8em; margin-bottom: 25px; }
+    .highlight { color: #888; }
+
+    /* The Main Frame Structure */
+    .action-card {
+        border-radius: 8px;
+        overflow: hidden;
+        background: #222; /* Lighter top background */
+        border: 1px solid #333;
+    }
+
+    .card-header-main {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .queue-title { color: #fff; font-size: 1.2em; margin: 0; }
+
+    /* The Inset Well */
+    .card-body-well {
+        background: #181818; /* Darker bottom background */
+        margin: 0 1px 1px 1px;
+        border-top: 1px solid #333;
+        min-height: 200px;
+        padding: 20px;
+    }
+
+    .empty-message-center {
+        text-align: center;
+        color: #666;
+        padding-top: 60px;
+        font-size: 0.9em;
+    }
+
+    /* Button Style */
+    .btn-primary-yellow {
+        background: #f1c40f;
+        color: #000;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    /* Table Styles */
+    .ingest-table { width: 100%; border-collapse: collapse; }
+    .ingest-table th {
+        text-align: left;
+        color: #f1c40f;
+        font-size: 0.75em;
+        text-transform: uppercase;
+        padding-bottom: 15px;
+        letter-spacing: 1px;
+    }
+    .ingest-table td {
+        padding: 10px 0;
+        border-bottom: 1px solid #222;
+        color: #ccc;
+        font-size: 0.85em;
+    }
+    .badge-folder { background: #333; padding: 2px 6px; border-radius: 3px; color: #888; }
+    .path-preview { color: #555; font-family: monospace; font-size: 0.8em; }
+</style>
+{% endblock %}

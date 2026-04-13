@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}Error {{ error_code }} - {{ hub_name }}{% endblock %}
+
+{% block content %}
+<div class="error-page">
+    <h1>{{ error_code }}</h1>
+    <p>{{ error_message }}</p>
+    <a href="{{ url_for('index') }}" class="btn btn-primary">Go Home</a>
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+I've updated the requirements to include Relationship Management, specifically focused on your requirement for tracking marriage anniversaries. I have also reinforced the "Existing Household" selection logic to include resident names as we discussed.
+
+Starlight Manor CRM Upgrade: Technical Requirements (v2.1)
+1. Project Objective
+Transition the "People" module into a relational CRM by activating the existing Households and Relationships tables in starlight_manor.db.
+
+2. Core Operational Constraints
+Zero Snippet Policy: All proposed changes must be delivered as full, complete versions of people.py, people.html, and people.js to prevent environment mismatch.
+
+Visual Preservation: The individual profile image must be constrained to a fixed 180px width and height with object-fit: cover to prevent layout breaking.
+
+Functional Baseline: The 12-card grid navigation, category filtering, and pagination must remain the primary entry point.
+
+3. Database Integration (starlight_manor.db)
+Households: Map individuals to family units using the household_id foreign key.
+
+Relationships: Track connections between people, specifically focusing on marriage to record anniversary_date.
+
+Search Engine: Implement a debounced server-side search querying first_name, last_name, and nickname.
+
+4. Household Management Workflow (Manual Identification)
+A. The Individual Dossier Context
+Display: Show the current HouseholdName in the dossier (e.g., "Struve Household" or "Standalone").
+
+Link Trigger: An "Add to Household" button that opens a selection interface.
+
+Choose Existing:
+
+Present a list of current households from the Households table.
+
+Context Requirement: Each household entry must display the names of its current residents (e.g., "Struve Household: Brandon, Kendra, Dexter, Wednesday") to ensure correct selection.
+
+Create New:
+
+Enter a name for a new unit.
+
+Batch Action: Once created, provide a search-and-select list to add multiple existing "Standalone" people to this new household in one commit.
+
+B. The Household Master View
+View Toggle: A primary/secondary button pair at the top of the module to swap between the People Grid and the Household Directory.
+
+Detailed View: Clicking a household card shows residents, a unified address, and inline "Add/Remove" actions.
+
+5. Relationship & Anniversary Tracking
+Primary Focus: Marriage relationships.
+
+Data Entry: In the dossier (or within the Household view), provide an interface to link two people as "Married."
+
+Anniversary Recording: When a marriage link is created, the system must prompt for an anniversary_date.
+
+Visibility: Display the anniversary date prominently within the "About" section of the dossier for both individuals in the relationship.
+
+6. Profile Editing & Persistence
+Surgical Save: Update birthdate, deathdate, email, phone, and the four address components (street_address, city, state, zip_code).
+
+Conditional Logic: The "Passed" date row remains hidden unless data exists or "Edit Mode" is active.
+
+7. System Data Visibility
+The Google ID, Immich ID, and digiKam ID must be visible and editable within the "System Data" block of the dossier.

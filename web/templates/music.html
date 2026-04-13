@@ -1,0 +1,620 @@
+{% extends "base.html" %}
+
+{% block title %}Music - {{ hub_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>🎵 Music</h2>
+    <p>Search NZB indexers and manage music library</p>
+</div>
+
+<!-- Tab Navigation -->
+<div class="tabs">
+    <button class="tab-btn {% if active_tab == 'search' %}active{% endif %}" onclick="switchTab('search')">
+        Search
+    </button>
+    <button class="tab-btn {% if active_tab == 'ingest' %}active{% endif %}" onclick="switchTab('ingest')">
+        Ingest
+    </button>
+</div>
+
+<!-- Search Tab -->
+<div id="search-tab" class="tab-content {% if active_tab == 'search' %}active{% endif %}">
+    <div class="card">
+        <div class="card-header">
+            <h3>Search NZB Indexers</h3>
+        </div>
+        <div class="card-body">
+            <p>Search nzb.su, NZBGeek, and NZBPlanet for music albums</p>
+            
+            <div class="search-box">
+                <input type="text" id="search-query" placeholder="Enter artist or album name..." class="search-input">
+                <button onclick="searchMusic()" class="btn btn-primary">Search</button>
+            </div>
+            
+            <div id="search-results" class="search-results"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Ingest Tab -->
+<div id="ingest-tab" class="tab-content {% if active_tab == 'ingest' %}active{% endif %}">
+    <div class="card">
+        <div class="card-header">
+            <h3>Ingest - Bulk Scan & Batch Run</h3>
+        </div>
+        <div class="card-body">
+            <p>Scan staged albums in: <code>C:\Starlight Manor Command\Working\Music\Staging\</code></p>
+
+            <div class="ingest-actions">
+                <button onclick="scanSources()" class="btn btn-secondary">Scan Sources</button>
+                <button id="run-ingest-btn" onclick="runSelectedIngest()" class="btn btn-primary" disabled>Run Ingest</button>
+                <div class="ingest-status">
+                    <div><strong>Last scan:</strong> <span id="scan-timestamp">—</span></div>
+                    <div><strong>Selected:</strong> <span id="scan-selected-count">0</span></div>
+                    <div><strong>Found:</strong> <span id="scan-total-count">0</span></div>
+                </div>
+            </div>
+
+            <div id="scan-results" class="scan-results">
+                <div class="empty-state">Click <strong>Scan Sources</strong> to review staged albums.</div>
+            </div>
+
+            <details class="ingest-details">
+                <summary>Optional: Individual preview/edit workflow (unchanged)</summary>
+                <p style="margin-top: 10px; color: var(--text-secondary); font-size: 0.85rem;">
+                    The classic preview/edit ingest modal is still available for single-album cleanup. Use it if you want to adjust tags before ingest.
+                </p>
+                <button onclick="loadAlbums()" class="btn btn-secondary btn-small" style="margin-top: 10px;">Load legacy album list</button>
+                <div id="albums-list" class="albums-list" style="margin-top: 14px;"></div>
+            </details>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div id="preview-modal" class="modal" style="display: none;">
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h3>Album Preview</h3>
+            <button class="modal-close" onclick="closePreviewModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="preview-grid">
+                <!-- Left: Cover Image -->
+                <div class="preview-cover">
+                    <img id="preview-cover-img" src="" alt="Album Cover">
+                </div>
+                
+                <!-- Right: Details & Form -->
+                <div class="preview-details">
+                    <h4>Album Information</h4>
+                    
+                    <div class="form-group">
+                        <label>Album Artist:</label>
+                        <input type="text" id="edit-artist" class="form-input">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Album:</label>
+                        <input type="text" id="edit-album" class="form-input">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Year:</label>
+                        <input type="text" id="edit-year" class="form-input" placeholder="e.g., 2010">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Genre: <span id="genre-validation" style="margin-left: 8px;"></span></label>
+                        <input type="text" id="edit-genre" class="form-input" placeholder="Enter genre or select below">
+                        <select id="genre-select" class="form-input" style="margin-top: 8px;">
+                            <option value="">-- Select from standard genres --</option>
+                        </select>
+                    </div>
+                    
+                    <div class="preview-info">
+                        <p><strong>Tracks:</strong> <span id="preview-track-count">0</span></p>
+                        <p><strong>Destination:</strong><br><span id="preview-dest-path" style="font-size: 0.75rem; color: var(--text-secondary);"></span></p>
+                        <p id="preview-artist-status"></p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Track List -->
+            <div class="preview-tracks">
+                <h4>Tracks</h4>
+                <div id="preview-track-list" class="track-list"></div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closePreviewModal()" class="btn btn-secondary">Cancel</button>
+            <button onclick="updateMetadataAndIngest()" class="btn btn-primary">Update Metadata & Ingest Album</button>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="loading-overlay" style="display: none;">
+    <div class="loading-spinner"></div>
+    <p>Processing...</p>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Tabs */
+    .tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 24px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .tab-btn {
+        padding: 12px 24px;
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+    }
+    
+    .tab-btn:hover {
+        color: var(--text-primary);
+    }
+    
+    .tab-btn.active {
+        color: var(--accent-gold);
+        border-bottom-color: var(--accent-gold);
+    }
+    
+    .tab-content {
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    /* Search */
+    .search-box {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+    
+    .search-input {
+        flex: 1;
+        padding: 12px 16px;
+        background-color: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        color: var(--text-primary);
+        font-size: 0.875rem;
+    }
+    
+    .search-input:focus {
+        outline: none;
+        border-color: var(--accent-gold);
+    }
+    
+    .search-results {
+        margin-top: 24px;
+    }
+    
+    .results-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .sort-controls {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+    
+    .sort-btn {
+        padding: 6px 12px;
+        background-color: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        color: var(--text-secondary);
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .sort-btn:hover {
+        color: var(--text-primary);
+        border-color: var(--accent-gold);
+    }
+    
+    .sort-btn.active {
+        background-color: var(--accent-gold);
+        color: var(--bg-primary);
+        border-color: var(--accent-gold);
+    }
+    
+    .result-item {
+        background-color: var(--bg-tertiary);
+        padding: 16px;
+        margin-bottom: 12px;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: border-color 0.2s;
+    }
+    
+    .result-item:hover {
+        border-color: var(--accent-gold);
+    }
+    
+    .result-info {
+        flex: 1;
+    }
+    
+    .result-title {
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: var(--text-primary);
+    }
+    
+    .result-meta {
+        display: flex;
+        gap: 16px;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+    
+    .result-actions {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .btn-small {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+    }
+    
+    /* Albums List */
+    .albums-list {
+        margin-top: 24px;
+    }
+    
+    .album-item {
+        background-color: var(--bg-tertiary);
+        padding: 16px;
+        margin-bottom: 12px;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .album-info {
+        flex: 1;
+    }
+    
+    .album-name {
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: var(--text-primary);
+    }
+    
+    .album-meta {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+    
+    .album-actions {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 48px 24px;
+        color: var(--text-secondary);
+    }
+    
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 24px;
+    }
+    
+    .page-btn {
+        padding: 8px 12px;
+        background-color: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        color: var(--text-primary);
+        cursor: pointer;
+        font-size: 0.875rem;
+    }
+    
+    .page-btn:hover {
+        border-color: var(--accent-gold);
+    }
+    
+    .page-btn.active {
+        background-color: var(--accent-gold);
+        color: var(--bg-primary);
+        border-color: var(--accent-gold);
+    }
+    
+    .page-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    /* Modal */
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        overflow-y: auto;
+    }
+    
+    .modal-content {
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        width: 90%;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    .modal-large {
+        max-width: 900px;
+    }
+    
+    .modal-header {
+        padding: 16px 24px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .modal-header h3 {
+        margin: 0;
+        color: var(--accent-gold);
+    }
+    
+    .modal-close {
+        background: none;
+        border: none;
+        color: var(--text-primary);
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 0;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .modal-close:hover {
+        color: var(--accent-gold);
+    }
+    
+    .modal-body {
+        padding: 24px;
+    }
+    
+    .modal-footer {
+        padding: 16px 24px;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+    
+    /* Preview Grid */
+    .preview-grid {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+    
+    .preview-cover img {
+        width: 100%;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--border-color);
+    }
+    
+    .preview-details h4 {
+        margin-bottom: 16px;
+        color: var(--accent-gold);
+    }
+    
+    .form-group {
+        margin-bottom: 16px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 10px 12px;
+        background-color: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        color: var(--text-primary);
+        font-size: 0.875rem;
+    }
+    
+    .form-input:focus {
+        outline: none;
+        border-color: var(--accent-gold);
+    }
+    
+    .preview-info {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border-color);
+    }
+    
+    .preview-info p {
+        margin-bottom: 8px;
+        font-size: 0.875rem;
+    }
+    
+    /* Track List */
+    .preview-tracks h4 {
+        margin-bottom: 12px;
+        color: var(--accent-gold);
+    }
+    
+    .track-list {
+        max-height: 300px;
+        overflow-y: auto;
+        background-color: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 12px;
+    }
+    
+    .track-item {
+        padding: 8px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.875rem;
+    }
+    
+    .track-item:last-child {
+        border-bottom: none;
+    }
+    
+    .track-name {
+        color: var(--text-primary);
+    }
+    
+    .track-size {
+        color: var(--text-secondary);
+    }
+    
+    /* Genre Validation Indicators */
+    .genre-valid {
+        color: #4caf50;
+        font-weight: bold;
+    }
+    
+    .genre-invalid {
+        color: #ff9800;
+        font-weight: bold;
+    }
+    
+    @media (max-width: 768px) {
+        .preview-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+/* Bulk Scan Table */
+.ingest-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+.ingest-status {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    margin-left: auto;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    flex-wrap: wrap;
+}
+.scan-results {
+    margin-top: 10px;
+}
+.scan-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+.scan-table th, .scan-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: top;
+    font-size: 0.85rem;
+}
+.scan-table th {
+    text-align: left;
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+    color: var(--text-secondary);
+    background-color: rgba(255,255,255,0.02);
+}
+.scan-table tr:hover td {
+    background-color: rgba(255,255,255,0.03);
+}
+.scan-cover {
+    width: 52px;
+    height: 52px;
+    border-radius: 6px;
+    object-fit: cover;
+    border: 1px solid var(--border-color);
+    background: rgba(255,255,255,0.03);
+}
+.pill {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+.pill.ok { color: #a7f3d0; border-color: rgba(167,243,208,0.35); }
+.pill.warn { color: #fde68a; border-color: rgba(253,230,138,0.35); }
+.pill.bad { color: #fca5a5; border-color: rgba(252,165,165,0.35); }
+.mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    word-break: break-all;
+}
+
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/music.js') }}"></script>
+{% endblock %}

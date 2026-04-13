@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="person-detail-container">
+    <div class="detail-header">
+        <h1>{{ person.DisplayName }}</h1>
+        <a href="/people" class="btn-back">← Back to People</a>
+    </div>
+    
+    <div class="detail-layout">
+        <!-- Left Side - Photo -->
+        <div class="photo-section">
+            {% if person.ProfilePhotoPath %}
+            <img src="/data/{{ person.ProfilePhotoPath.replace('\\', '/') }}" alt="{{ person.DisplayName }}" class="detail-photo">
+            {% else %}
+            <div class="detail-no-photo">📷</div>
+            {% endif %}
+            
+            <div class="photo-info">
+                {% if person.Age %}
+                <div class="age-display">{{ person.Age }}</div>
+                {% endif %}
+                {% if person.Category %}
+                <div class="category-display">{{ person.Category }}</div>
+                {% endif %}
+                {% if person.Subcategory %}
+                <div class="subcategory-display">{{ person.Subcategory }}</div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Right Side - Details -->
+        <div class="details-section">
+            
+            <!-- Names -->
+            <div class="detail-group">
+                <h2>Names</h2>
+                <div class="detail-grid">
+                    {% if person.FirstName %}
+                    <div class="detail-item">
+                        <span class="detail-label">First Name</span>
+                        <span class="detail-value">{{ person.FirstName }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if person.MiddleName %}
+                    <div class="detail-item">
+                        <span class="detail-label">Middle Name</span>
+                        <span class="detail-value">{{ person.MiddleName }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if person.LastName %}
+                    <div class="detail-item">
+                        <span class="detail-label">Last Name</span>
+                        <span class="detail-value">{{ person.LastName }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if person.NickName %}
+                    <div class="detail-item">
+                        <span class="detail-label">Nickname</span>
+                        <span class="detail-value">{{ person.NickName }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if person.MaidenName %}
+                    <div class="detail-item">
+                        <span class="detail-label">Maiden Name</span>
+                        <span class="detail-value">{{ person.MaidenName }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Personal Info -->
+            <div class="detail-group">
+                <h2>Personal Information</h2>
+                <div class="detail-grid">
+                    {% if person.Gender %}
+                    <div class="detail-item">
+                        <span class="detail-label">Gender</span>
+                        <span class="detail-value">{{ person.Gender }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if person.BirthDate %}
+                    <div class="detail-item">
+                        <span class="detail-label">Birth Date</span>
+                        <span class="detail-value">{{ person.BirthDate }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if person.DeathDate %}
+                    <div class="detail-item">
+                        <span class="detail-label">Death Date</span>
+                        <span class="detail-value">{{ person.DeathDate }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Relationships -->
+            <div class="detail-group">
+                <h2>Relationships</h2>
+                <div class="detail-grid">
+                    {% if person.RelationToKendra %}
+                    <div class="detail-item">
+                        <span class="detail-label">Relation to Kendra</span>
+                        <span class="detail-value">{{ person.RelationToKendra }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if person.RelationToBrandon %}
+                    <div class="detail-item">
+                        <span class="detail-label">Relation to Brandon</span>
+                        <span class="detail-value">{{ person.RelationToBrandon }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if person.RelationToDexter %}
+                    <div class="detail-item">
+                        <span class="detail-label">Relation to Dexter</span>
+                        <span class="detail-value">{{ person.RelationToDexter }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if person.RelationToWednesday %}
+                    <div class="detail-item">
+                        <span class="detail-label">Relation to Wednesday</span>
+                        <span class="detail-value">{{ person.RelationToWednesday }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Contact Information -->
+            {% if person.PrimaryEmail or person.PrimaryPhone or person.PrimaryAddress %}
+            <div class="detail-group">
+                <h2>Contact Information</h2>
+                <div class="detail-grid">
+                    {% if person.PrimaryEmail %}
+                    <div class="detail-item">
+                        <span class="detail-label">Email</span>
+                        <span class="detail-value">{{ person.PrimaryEmail }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if person.PrimaryPhone %}
+                    <div class="detail-item">
+                        <span class="detail-label">Phone</span>
+                        <span class="detail-value">{{ person.PrimaryPhone }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if person.PrimaryAddress %}
+                    <div class="detail-item full-width">
+                        <span class="detail-label">Address</span>
+                        <span class="detail-value">{{ person.PrimaryAddress }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Notes -->
+            {% if person.Notes %}
+            <div class="detail-group">
+                <h2>Notes</h2>
+                <div class="notes-content">{{ person.Notes }}</div>
+            </div>
+            {% endif %}
+            
+            <!-- Immich Photos -->
+            {% if person.PhotoCount and person.PhotoCount > 0 %}
+            <div class="detail-group">
+                <h2>Photos in Immich ({{ person.PhotoCount }})</h2>
+                <div class="immich-note">This person appears in {{ person.PhotoCount }} photos in your Immich library.</div>
+            </div>
+            {% endif %}
+            
+        </div>
+    </div>
+</div>
+{% endblock %}

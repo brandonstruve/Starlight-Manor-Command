@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Home Videos - {{ hub_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Home Video Ingest</h2>
+    <p>Source: <span style="color: var(--accent-gold);">Working\Home Videos\Incoming</span></p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Incoming Queue</h3>
+        <button id="scanBtn" class="btn btn-primary" style="margin-left: auto;">Scan Incoming Folder</button>
+    </div>
+    <div class="card-body">
+        <div class="table-container">
+            <table class="ingest-table">
+                <thead>
+                    <tr>
+                        <th>File Name</th>
+                        <th style="width: 220px;">Title</th>
+                        <th style="width: 90px;">Year</th>
+                        <th>Genre / Album</th>
+                        <th style="width: 100px;">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="videoBody">
+                    </tbody>
+            </table>
+        </div>
+        <div id="noFilesMsg" style="text-align: center; padding: 40px; opacity: 0.5;">
+            No files scanned. Click the button above to begin.
+        </div>
+    </div>
+</div>
+
+<div id="previewModal" class="modal" style="display:none;">
+    <div class="modal-content card">
+        <div class="card-header">
+            <h3>Publish Preview</h3>
+            <button onclick="closeModal()" class="btn-close" style="margin-left: auto; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">&times;</button>
+        </div>
+        <div class="card-body">
+            <div style="margin-bottom: 20px;">
+                <p style="font-size: 0.7rem; color: var(--accent-gold); text-transform: uppercase; margin-bottom: 5px;">Destination Path</p>
+                <div id="prePath" style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px; font-family: monospace; font-size: 0.8rem; border: 1px solid var(--border-color); word-break: break-all; color: #ccc;"></div>
+            </div>
+            
+            <div class="art-preview-container">
+                <div class="preview-col-poster">
+                    <p class="preview-label">Poster (2:3 Ratio)</p>
+                    <div id="posterPreview" class="art-box poster-box">
+                        </div>
+                </div>
+                
+                <div class="preview-col-bg">
+                    <p class="preview-label">Background (16:9 Ratio)</p>
+                    <div id="bgPreview" class="art-box bg-box">
+                        </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px; display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button id="confirmPublish" class="btn btn-primary">Confirm & Publish</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* --- Table Styles --- */
+    .ingest-table { width: 100%; border-collapse: collapse; }
+    .ingest-table th { text-align: left; padding: 12px; border-bottom: 2px solid var(--border-color); color: var(--accent-gold); font-size: 0.85rem; text-transform: uppercase; }
+    .ingest-table td { padding: 12px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+    
+    .ingest-table select, .ingest-table input { 
+        width: 100%; background: #1a1a1a; color: #fff; border: 1px solid var(--border-color); padding: 8px; border-radius: 4px; font-size: 0.9rem;
+    }
+    .ingest-table select option { background: #1a1a1a; color: #fff; }
+
+    /* --- Modal & Preview Styles --- */
+    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+    .modal-content { width: 90%; max-width: 800px; border: 1px solid var(--accent-gold); box-shadow: 0 10px 50px rgba(0,0,0,0.8); }
+    
+    .art-preview-container { display: flex; gap: 24px; align-items: flex-end; margin-top: 10px; }
+    .preview-label { font-size: 0.65rem; color: var(--accent-gold); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+    
+    .art-box { 
+        background: #080808; border: 1px solid #333; position: relative; 
+        overflow: hidden; display: flex; align-items: center; justify-content: center; 
+        border-radius: 4px; box-shadow: inset 0 0 15px #000;
+    }
+    
+    /* Strict Aspect Ratios */
+    .preview-col-poster { width: 180px; flex-shrink: 0; }
+    .poster-box { width: 180px; height: 270px; }
+    
+    .preview-col-bg { flex-grow: 1; }
+    .bg-box { width: 100%; height: 270px; }
+
+    /* Ensure images fill space and cover placeholder text */
+    .art-box img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    
+    /* Error/Placeholder state */
+    .art-error { color: #555; font-size: 0.75rem; text-align: center; padding: 20px; font-style: italic; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/homevideos.js') }}"></script>
+{% endblock %}

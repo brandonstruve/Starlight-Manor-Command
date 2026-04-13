@@ -1,0 +1,37 @@
+@bp.route('/api/person/<int:person_id>')
+def get_person(person_id):
+    conn = get_db()
+    person = conn.execute('SELECT * FROM People WHERE PersonID = ?', (person_id,)).fetchone()
+    conn.close()
+    
+    if not person:
+        return jsonify({"error": "Not found"}), 404
+    
+    data = dict(person)
+    data['hero_image'] = '' # Default empty
+    data['photo_count'] = 0
+
+    # Check for Immich ID and Credentials
+    if data.get('ImmichPersonID') and IMMICH_URL and IMMICH_KEY:
+        headers = {'x-api-key': IMMICH_KEY, 'Accept': 'application/json'}
+        p_id = data['ImmichPersonID']
+        
+        try:
+            # 1. Fetch Photo Count (Stats)
+            stat_r = requests.get(f"{IMMICH_URL}/api/person/{p_id}/statistics", headers=headers, timeout=2)
+            if stat_r.status_code == 200:
+                data['photo_count'] = stat_r.json().get('assets', 0)
+            
+            # 2. Fetch All Assets to pick a random one
+            # Note: This endpoint returns assets the person is tagged in
+            asset_r = requests.get(f"{IMMICH_URL}/api/person/{p_id}/assets", headers=headers, timeout=2)
+            if asset_r.status_code == 200:
+                assets = asset_r.json()
+                if assets and len(assets) > 0:
+                    random_asset = random.choice(assets)
+                    # We use the thumbnail/preview endpoint for the background
+                    data['hero_image'] = f"{IMMICH_URL}/api/asset/thumbnail/{random_asset['id']}?size=preview"
+        except Exception as e:
+            print(f"Immich Hero Error: {e}")
+            
+    return jsonify(data)
