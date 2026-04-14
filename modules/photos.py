@@ -621,11 +621,10 @@ def ingest_run():
 
     current_app.logger.info(f"Ingest complete: {len(performed)} performed, {len(failed)} failed")
 
-    return jsonify({
-        'performed': len(performed),
-        'failed': len(failed),
-        'manifest': str(manifest_file)
-    })
+    if len(failed) > 0:
+        return jsonify({"status": "error", "message": f"Ingest failed: {len(failed)} files failed, {len(performed)} succeeded"})
+    else:
+        return jsonify({"status": "success", "message": f"Ingest complete: {len(performed)} files processed"})
 
 def _build_publish_plan():
     source_files = []
@@ -799,11 +798,12 @@ def publish_run():
 
     write_manifest(performed + failed, manifest_file)
 
-    return jsonify({
-        'performed': success_files,
-        'failed': len(failed),
-        'manifest': str(manifest_file)
-    })
+    current_app.logger.info(f"Publish complete: {success_files} published, {len(failed)} failed")
+
+    if len(failed) > 0:
+        return jsonify({"status": "error", "message": f"Publish failed: {len(failed)} files failed, {success_files} succeeded"})
+    else:
+        return jsonify({"status": "success", "message": f"Publish complete: {success_files} files published"})
 
 
 
@@ -829,7 +829,4 @@ def cleanup():
 
     current_app.logger.info(f"Cleanup complete: {counts}")
 
-    return jsonify({
-        'success': True,
-        'counts': counts
-    })
+    return jsonify({"status": "success", "message": f"Cleanup complete: {sum(counts.values())} files removed"})

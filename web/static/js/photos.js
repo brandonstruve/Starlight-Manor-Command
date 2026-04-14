@@ -70,19 +70,19 @@ async function ingestRun() {
         resultsDiv.classList.add('show');
 
         let html = '<h4>Ingest Complete</h4>';
-        html += '<div class="result-success">';
-        html += `<p>✅ ${data.performed} files processed successfully</p>`;
-        if (data.failed > 0) {
-            html += `<p class="result-error">❌ ${data.failed} files failed</p>`;
+        if (data.status === 'success') {
+            html += '<div class="result-success">';
+            html += `<p>✅ ${data.message}</p>`;
+            html += '</div>';
+        } else {
+            html += '<div class="result-error">';
+            html += `<p>❌ ${data.message}</p>`;
+            html += '</div>';
         }
-        html += '</div>';
-        html += `<p style="margin-top: 16px;"><small>Manifest: ${data.manifest}</small></p>`;
 
         resultsDiv.innerHTML = html;
 
-        showToast(`Ingest complete: ${data.performed} files processed`, 'success');
-
-        loadDashboard();
+        showToast(data.message, data.status === 'success' ? 'success' : 'error');
     } catch (error) {
         showToast('Ingest failed: ' + error.message, 'error');
     } finally {
@@ -214,24 +214,24 @@ async function publishRun() {
         resultsDiv.classList.add('show');
 
         let html = '<h4>Publish Complete</h4>';
-        html += '<div class="result-success">';
-        html += `<p>✅ ${data.performed} files published successfully</p>`;
-        html += '<p>Files copied to:</p>';
-        html += '<ul>';
-        html += '<li>Upload Room</li>';
-        html += '<li>Library (\\\\SM-NAS-01\\Media\\Photos\\)</li>';
-        html += '</ul>';
-        if (data.failed > 0) {
-            html += `<p class="result-error">❌ ${data.failed} files failed</p>`;
+        if (data.status === 'success') {
+            html += '<div class="result-success">';
+            html += `<p>✅ ${data.message}</p>`;
+            html += '<p>Files copied to:</p>';
+            html += '<ul>';
+            html += '<li>Upload Room</li>';
+            html += '<li>Library (\\\\SM-NAS-01\\Media\\Photos\\)</li>';
+            html += '</ul>';
+            html += '</div>';
+        } else {
+            html += '<div class="result-error">';
+            html += `<p>❌ ${data.message}</p>`;
+            html += '</div>';
         }
-        html += '</div>';
-        html += `<p style="margin-top: 16px;"><small>Manifest: ${data.manifest}</small></p>`;
 
         resultsDiv.innerHTML = html;
 
-        showToast(`Publish complete: ${data.performed} files`, 'success');
-
-        loadDashboard();
+        showToast(data.message, data.status === 'success' ? 'success' : 'error');
     } catch (error) {
         showToast('Publish failed: ' + error.message, 'error');
     } finally {
@@ -259,20 +259,19 @@ async function cleanup() {
         resultsDiv.classList.add('show');
 
         let html = '<h4>Cleanup Complete</h4>';
-        html += '<div class="result-success">';
-        html += '<p>Files deleted from working folders:</p>';
-        html += '<ul>';
-        for (const [folder, count] of Object.entries(data.counts)) {
-            html += `<li>${folder}: ${count} files</li>`;
+        if (data.status === 'success') {
+            html += '<div class="result-success">';
+            html += `<p>✅ ${data.message}</p>`;
+            html += '</div>';
+        } else {
+            html += '<div class="result-error">';
+            html += `<p>❌ ${data.message}</p>`;
+            html += '</div>';
         }
-        html += '</ul>';
-        html += '</div>';
 
         resultsDiv.innerHTML = html;
 
-        showToast('Cleanup complete', 'success');
-
-        loadDashboard();
+        showToast(data.message, data.status === 'success' ? 'success' : 'error');
     } catch (error) {
         showToast('Cleanup failed: ' + error.message, 'error');
     } finally {
@@ -283,5 +282,4 @@ async function cleanup() {
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Photos module initialized');
-    loadDashboard();
 });
