@@ -1,13 +1,12 @@
 import os
 import time
-from dotenv import load_dotenv
+import requests
 from plexapi.server import PlexServer
 
-# --- CONFIG ---
-load_dotenv(r"C:\Shortcut Hub\Toolbox\.env")
+# --- HARD-CODED CONFIG (Bypassing .env for direct connection) ---
+PLEX_URL = "http://192.168.68.67:32400"
+PLEX_TOKEN = "xMzuPknZVu3yee3DymE_"
 
-PLEX_URL = os.getenv("PLEX_URL")
-PLEX_TOKEN = os.getenv("PLEX_TOKEN")
 M3U_BASE_DIR = r"C:\Users\brand\Music\MusicBee\Playlists"
 ART_DIR = r"C:\Users\brand\Music\MusicBee\Playlists\_PLAYLISTART"
 
@@ -32,15 +31,22 @@ def find_art_file(base_name):
 
 def sync_to_plex():
     report = []
+    
+    # Force ignore system proxies to prevent routing errors on SM-ENGINE-BS
+    session = requests.Session()
+    session.trust_env = False 
+
     try:
-        plex = PlexServer(PLEX_URL, PLEX_TOKEN)
+        print(f"📡 Attempting direct connection to SM-GUTS-01 ({PLEX_URL})...")
+        plex = PlexServer(PLEX_URL, PLEX_TOKEN, session=session)
         music_library = plex.library.section('Music')
-        print(f"📡 Connected to: {plex.friendlyName}")
+        print(f"✅ Connected to: {plex.friendlyName}")
     except Exception as e:
-        print(f"❌ Connection Failed: {e}"); return
+        print(f"❌ Connection Failed: {e}")
+        return False
 
     # --- INDEXING ---
-    print("🧠 Building Plex Path Map (Indexing Tracks)...")
+    print("🧠 Building Plex Path Map...")
     plex_map = {}
     all_tracks = music_library.search(libtype='track')
     for track in all_tracks:
@@ -92,7 +98,6 @@ def sync_to_plex():
                 plex.createPlaylist(plex_name, items=plex_tracks)
                 art_status = "❌"
                 
-                # Check for Palette of BS override first, then fallback to standard search
                 palette_art_path = os.path.join(ART_DIR, "Palette of BS.png")
                 if folder_name == "Palette of BS" and os.path.exists(palette_art_path):
                     art = palette_art_path
@@ -118,9 +123,13 @@ def sync_to_plex():
     for row in report:
         print(f"{row[0]:<35} | {row[1]:<5} | {row[2]}")
     print("="*50)
+    return True
 
 if __name__ == "__main__":
     os.system('cls' if os.name == 'nt' else 'clear')
-    sync_to_plex()
-    print("\n✅ Sync Complete.")
+    print("STARLIGHT MANOR PLEX SYNC v2.2 (Direct-Link)")
+    if sync_to_plex():
+        print("\n✅ Sync Process Finished.")
+    else:
+        print("\n❌ Sync Failed.")
     time.sleep(2)
